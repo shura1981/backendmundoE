@@ -239,4 +239,36 @@ class UsuarioController extends Controller
         }
         return response()->json($data, 200);
     }
+
+
+
+    /**
+     * Devuelve un mensaje por su id.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function showMessage($id)
+    {
+        //obtener el mensaje por su id
+        $mensaje = Mensaje::find($id);
+        if (is_object($mensaje)) {
+            $data = [
+                'res' => true,
+                'mensaje' => $mensaje
+            ];
+        } else {
+            $data = [
+                'res' => false,
+                'message' => 'No se encontro el mensaje'
+            ];
+        }
+        return response()->json($data, 200);
+
+
+    }
+
+
+
+
 }

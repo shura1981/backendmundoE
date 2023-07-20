@@ -19,9 +19,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/usuarios', [UsuarioController::class, 'index']);// devuelve todos los usuarios
-Route::get('/mensajes', [UsuarioController::class, 'selectAllMessages']); // devuelve todos los mensajes
-Route::post('/usuarios', [UsuarioController::class, 'store']); // crea un usuario
-Route::get('/usuarios/{id}', [UsuarioController::class, 'show']); // devuelve un usuario
-Route::put('/usuarios/{id}', [UsuarioController::class, 'update']); // actualiza un usuario
-Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy']);// elimina un usuario
+Route::group(['middleware' => 'basicauth'], function () {
+    // Rutas que requieren autenticación básica.
+    Route::get('/usuarios', [UsuarioController::class, 'index']); // devuelve todos los usuarios
+    Route::get('/mensajes', [UsuarioController::class, 'selectAllMessages']); // devuelve todos los mensajes
+    Route::get('/mensaje/{id}', [UsuarioController::class, 'showMessage']); // devuelve un mensaje
+    Route::post('/usuarios', [UsuarioController::class, 'store']); // crea un usuario
+    Route::get('/usuarios/{id}', [UsuarioController::class, 'show']); // devuelve un usuario
+    Route::put('/usuarios/{id}', [UsuarioController::class, 'update']); // actualiza un usuario
+    Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy']); // elimina un usuario
+    // Agrega más rutas aquí según tus necesidades.
+});
