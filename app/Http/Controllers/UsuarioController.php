@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\SendStoreUsuario;
+use App\Mensaje;
 use App\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -43,7 +44,6 @@ class UsuarioController extends Controller
      * cuando no hay errores en el envío del correo
      * se utiliza la clase DB de laravel para hacer la consulta
      * como otra alternativa para interactuar con la base de datos y que porque se 
-     * me olvidó poner el campo send_email en el modelo Usuario 🤣
      * @param int $id id del usuario
      */
     private function updateSendEmail($id)
@@ -57,6 +57,27 @@ class UsuarioController extends Controller
         }
     }
 
+    /**
+     * Función que selecciona todos los mensajes de la base de datos
+     */
+    public function selectAllMessages()
+    {
+        $query = "SELECT u.id AS id_usuario, u.name, u.email, u.phone, u.created_at, u.send_email, m.message, m.created_at as created_at_message FROM usuarios u
+        INNER JOIN mensajes m ON m.id_usuario= u.id";
+        try {
+            $select = DB::select($query);
+            return response()->json($select, 200);
+
+        } catch (\Throwable $th) {
+            //  alamacenar en log de errores
+            return response()->json([
+                'res' => false,
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -68,9 +89,8 @@ class UsuarioController extends Controller
     {
         $validator = validator($request->all(), [
             'name' => 'required|string|max:100',
-            'email' => 'required|email|max:100|unique:usuarios',
+            'email' => 'required|email|max:100',
             'phone' => 'required|int',
-            'message' => 'required|string|max:300',
         ]);
 
         if ($validator->fails()) {
@@ -80,13 +100,19 @@ class UsuarioController extends Controller
             ], 500);
         }
 
-        $usuario = new Usuario();
-        $usuario->name = $request->input('name');
-        $usuario->email = $request->input('email');
-        $usuario->phone = $request->input('phone');
-        $usuario->message = $request->input('message');
-        $usuario->save();
-
+        // validar si el usuario ya existe por el correo
+        $usuario = Usuario::where('email', $request->input('email'))->first();
+        if (!is_object($usuario)) {
+            $usuario = new Usuario();
+            $usuario->name = $request->input('name');
+            $usuario->email = $request->input('email');
+            $usuario->phone = $request->input('phone');
+            $usuario->save();
+        }
+        $mensaje = new Mensaje();
+        $mensaje->id_usuario = $usuario->id;
+        $mensaje->message = $request->input('message');
+        $mensaje->save();
 
 
         $detail = array("nombre" => $usuario->name);
@@ -160,7 +186,6 @@ class UsuarioController extends Controller
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:100',
             'phone' => 'required|int',
-            'message' => 'required|string|max:300',
         ]);
 
         if ($validator->fails()) {
@@ -176,7 +201,6 @@ class UsuarioController extends Controller
             $usuario->name = $request->input('name');
             $usuario->email = $request->input('email');
             $usuario->phone = $request->input('phone');
-            $usuario->message = $request->input('message');
             $usuario->save();
             $data = [
                 'res' => true,
